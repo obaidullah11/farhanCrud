@@ -1,4 +1,9 @@
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from django.core.files.base import ContentFile
+from .utils import compress_image
+from PIL import Image
 
 class Category(models.Model):
     category = models.CharField(max_length=255)
@@ -19,3 +24,8 @@ class Subcategory(models.Model):
 
     def __str__(self):
         return self.name
+@receiver(pre_save, sender=Subcategory)
+def compress_image_before_save(sender, instance, **kwargs):
+    if instance.image and instance.image.size > 5 * 1024 * 1024:  # Check if image is larger than 5MB
+        # Compress the image
+        instance.image = compress_image(instance.image)
